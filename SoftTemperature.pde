@@ -75,11 +75,15 @@ void loop()
   
   addValueToFilter(analogRead(TEMPERATURE_PIN));     
   
-  // If it's time to print out the temperature to the serial monitor, do it.
+  // Get the current temperature in degrees Fahrenheit from the filter.
+  
+  float temperature = getTemperatureInFahrenheit();
+  
+  // If it's time to print out the debug information to the serial monitor, do it.
   
   if ((millis() - lastOutputTimeMs) >= SERIAL_MONITOR_OUTPUT_PERIOD_MS)
   {
-    printTemperatureToSerialMonitor();
+    printDebugToSerialMonitor();
     lastOutputTimeMs = millis();
   }
 }
@@ -135,20 +139,31 @@ float convertCelsiusToFahrenheit(float celsius)
   return (celsius * 1.8) + 32;
 }
 
+// This function reads the value of the filter, converts it into degrees Fahrenheit,
+// and returns it.
+
+float getTemperatureInFahrenheit()
+{
+  unsigned int counts = getFilterResult();
+  float volts = convertAdcCountsToVolts(counts);
+  float celsius = convertVoltsToCelsius(volts);
+  return convertCelsiusToFahrenheit(celsius);
+}
+
 // These functions print information to the serial monitor for debugging
 // purposes.
 
-void printTemperatureToSerialMonitor()
+void printDebugToSerialMonitor()
 {
   unsigned int counts = getFilterResult();
   float volts = convertAdcCountsToVolts(counts);
   float celsius = convertVoltsToCelsius(volts);
   float fahrenheit = convertCelsiusToFahrenheit(celsius);
    
-  displayTemperature(counts, volts, celsius, fahrenheit);
+  printTemperatureToSerialMonitor(counts, volts, celsius, fahrenheit);
 }
 
-void displayTemperature(unsigned int counts, float volts, float celsius, float fahrenheit)
+void printTemperatureToSerialMonitor(unsigned int counts, float volts, float celsius, float fahrenheit)
 {
   Serial.print("Counts = ");
   Serial.print(counts);
