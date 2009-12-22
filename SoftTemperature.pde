@@ -190,6 +190,8 @@ void printDebugToSerialMonitor()
   
   unsigned long color = findColorForTemperature(fahrenheit);
   printColorToSerialMonitor(color);
+  
+  Serial.println("");
 }
 
 void printTemperatureToSerialMonitor(unsigned int counts, float volts, float celsius, float fahrenheit)
