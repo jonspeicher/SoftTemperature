@@ -29,9 +29,9 @@ const float VOLTS_AT_MAX_DEGREES_C = VOLTS_AT_MIN_DEGREES_C + (MAX_DEGREES_C * V
 // have PWM capabilities.
 
 const unsigned int TEMPERATURE_PIN = 0;
-const unsigned int RED_LED_PIN = 9;
-const unsigned int GREEN_LED_PIN = 10;
-const unsigned int BLUE_LED_PIN = 11;
+const unsigned int RED_LED_PIN = 11;
+const unsigned int GREEN_LED_PIN = 9;
+const unsigned int BLUE_LED_PIN = 10;
 
 // This item tells your program what the input voltage to your LilyPad is.  It
 // is used in the calculation of the current temperature.  The LilyPad can run
@@ -63,7 +63,7 @@ unsigned int filterBufferCurrentIndex = 0;
 
 void setup()
 {
-  initFilter();           // Initialize our temperature filter.
+  initFilter();
   Serial.begin(9600);
 }
 
@@ -78,6 +78,11 @@ void loop()
   // Get the current temperature in degrees Fahrenheit from the filter.
   
   float temperature = getTemperatureInFahrenheit();
+  
+  // Look up the appropriate LED color and display it.
+  
+  unsigned long color = findColorForTemperature(color);
+  setLedColor(color);
   
   // If it's time to print out the debug information to the serial monitor, do it.
   
@@ -150,6 +155,28 @@ float getTemperatureInFahrenheit()
   return convertCelsiusToFahrenheit(celsius);
 }
 
+// This function finds the color that corresponds to the provided temperature and returns it.
+
+unsigned long findColorForTemperature(float fahrenheit)
+{
+  return 0xFF0000;
+}
+
+// This function changes the LED to the appropriate color.  The color is specified as one value
+// containing red, green, and blue information.  The red intensity is in byte 2, green in byte 1,
+// and blue in byte 0.
+
+void setLedColor(unsigned long color)
+{
+  byte red = (color & 0xFF0000) >> 16;
+  byte green = (color & 0xFF00) >> 8;
+  byte blue = (color & 0xFF);
+  
+  analogWrite(RED_LED_PIN, 255 - red);
+  analogWrite(GREEN_LED_PIN, 255 - green);
+  analogWrite(BLUE_LED_PIN, 255 - blue);
+}
+
 // These functions print information to the serial monitor for debugging
 // purposes.
 
@@ -159,8 +186,10 @@ void printDebugToSerialMonitor()
   float volts = convertAdcCountsToVolts(counts);
   float celsius = convertVoltsToCelsius(volts);
   float fahrenheit = convertCelsiusToFahrenheit(celsius);
-   
   printTemperatureToSerialMonitor(counts, volts, celsius, fahrenheit);
+  
+  unsigned long color = findColorForTemperature(fahrenheit);
+  printColorToSerialMonitor(color);
 }
 
 void printTemperatureToSerialMonitor(unsigned int counts, float volts, float celsius, float fahrenheit)
@@ -173,6 +202,18 @@ void printTemperatureToSerialMonitor(unsigned int counts, float volts, float cel
   Serial.print(celsius);
   Serial.print(", Fahrenheit = ");
   Serial.println(fahrenheit);
+}
+
+void printColorToSerialMonitor(unsigned long color)
+{
+  Serial.print("Color = ");
+  Serial.print(color, HEX);
+  Serial.print(", red = ");
+  Serial.print((color & 0xFF0000) >> 16);
+  Serial.print(", green = ");
+  Serial.print((color & 0xFF00) >> 8);
+  Serial.print(", blue = ");
+  Serial.println(color & 0xFF); 
 }
 
 // The Arduino library provides a helpful function called map that scales values
