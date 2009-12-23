@@ -12,9 +12,9 @@
 //
 // ----------------------------------------------------------------------------
 
-// These items tell your program the characteristics of your temperature sensor.
-// They can be found by reading the datasheet that comes with your sensor.  The
-// values here are specific to the LilyPad's temperature sensor module.
+// These items tell your program the characteristics of your temperature sensor.  They can be found 
+// by reading the datasheet that comes with your sensor.  The values here are specific to the 
+// LilyPad's temperature sensor module.
 
 const float MIN_DEGREES_C = 0.0;
 const float MAX_DEGREES_C = 70.0;
@@ -23,37 +23,33 @@ const float VOLTS_PER_DEGREE_C = 0.01;
 const float VOLTS_AT_MIN_DEGREES_C = 0.5;
 const float VOLTS_AT_MAX_DEGREES_C = VOLTS_AT_MIN_DEGREES_C + (MAX_DEGREES_C * VOLTS_PER_DEGREE_C);
 
-// These items tell your program where the temperature sensor module and the LED
-// module are connected to your LilyPad.  The temperature sensor should connect
-// to an analog input pin and the LED should connect to three digital pins that
-// have PWM capabilities.
+// These items tell your program where the temperature sensor module and the LED module are 
+// connected to your LilyPad.  The temperature sensor should connect to an analog input pin and the 
+// LED should connect to three digital pins that have PWM capabilities.
 
 const unsigned int TEMPERATURE_PIN = 0;
 const unsigned int RED_LED_PIN = 11;
 const unsigned int GREEN_LED_PIN = 9;
 const unsigned int BLUE_LED_PIN = 10;
 
-// This item tells your program what the input voltage to your LilyPad is.  It
-// is used in the calculation of the current temperature.  The LilyPad can run
-// with 3.3 volts (like a coin cell battery) or with 5 volts (like a USB cable
-// connected to your computer).  If this value isn't set properly, your program
-// won't calculate temperature correctly.
+// This item tells your program what the input voltage to your LilyPad is.  It is used in the 
+// calculation of the current temperature.  The LilyPad can run with 3.3 volts (like a coin cell 
+// battery) or with 5 volts (like a USB cable connected to your computer).  If this value isn't set 
+// properly, your program won't calculate temperature correctly.
 
 const float INPUT_VOLTAGE = 5.0;
 
-// The program will print temperatures and other debugging information to the
-// Serial Monitor periodically.  The first value below specifies how often it,
-// in milliseconds, the printout occurs.  1000 milliseconds equals one second.
-// The second value remembers when the last printout was.
+// The program will print temperatures and other debugging information to the Serial Monitor 
+// periodically.  The first value below specifies how often, in milliseconds, the printout occurs.  
+// 1000 milliseconds equals one second.  The second value remembers when the last printout was.
 
 const unsigned int SERIAL_MONITOR_OUTPUT_PERIOD_MS = 1000;
 unsigned long lastOutputTimeMs = 0;
 
-// The readings from the temperature sensor module are sensitive and can fluctuate
-// rapidly.  To keep the temperature from jumping around, the program averages the
-// last few samples from the sensor (this is called a "moving average filter").  
-// These items contain the last few samples and remember where to put the next 
-// sample (this is known as a "circular buffer").
+// The readings from the temperature sensor module are sensitive and can fluctuate rapidly.  To keep 
+// the temperature from jumping around, the program averages the last few samples from the sensor 
+// (this is called a "moving average filter").  These items contain the last few samples and 
+// remember where to put the next sample (this is known as a "circular buffer").
 
 const unsigned int FILTER_SIZE = 10;
 unsigned int filterBuffer[FILTER_SIZE];
@@ -93,9 +89,9 @@ void loop()
   }
 }
 
-// These functions are used to interact with the moving average filter.  They
-// allow the program to store a number of values and to determine their average,
-// using a mechanism called a circular buffer.
+// These functions are used to interact with the moving average filter.  They allow the program to 
+// store a number of values and to determine their average, using a mechanism called a circular 
+// buffer.
 
 void initFilter()
 {
@@ -123,11 +119,10 @@ unsigned int getFilterResult()
   return sum / FILTER_SIZE;
 }
 
-// The temperature sensor produces an output voltage that corresponds to the
-// sensed temperature.  The LilyPad sees this voltage as an analog-to-digital
-// conversion in units known as counts, that range from 0 - 1023.  These functions
-// convert from ADC counts to several intermediate units, ending with degrees
-// Fahrenheit.
+// The temperature sensor produces an output voltage that corresponds to the sensed temperature.  
+// The LilyPad sees this voltage as an analog-to-digital conversion in units known as counts that 
+// range from 0 - 1023.  These functions convert from ADC counts to several intermediate units, 
+// ending with degrees Fahrenheit.
 
 float convertAdcCountsToVolts(unsigned int counts)
 {
@@ -144,8 +139,7 @@ float convertCelsiusToFahrenheit(float celsius)
   return (celsius * 1.8) + 32;
 }
 
-// This function reads the value of the filter, converts it into degrees Fahrenheit,
-// and returns it.
+// This function reads the value of the filter, converts it into degrees Fahrenheit, and returns it.
 
 float getTemperatureInFahrenheit()
 {
@@ -159,12 +153,13 @@ float getTemperatureInFahrenheit()
 
 unsigned long findColorForTemperature(float fahrenheit)
 {
-  return 0xFF0000;
+  return 0x00FF00;
 }
 
 // This function changes the LED to the appropriate color.  The color is specified as one value
 // containing red, green, and blue information.  The red intensity is in byte 2, green in byte 1,
-// and blue in byte 0.
+// and blue in byte 0.  The PWM output is inverted since the LilyPad's RGB LED module is a common-
+// anode design.
 
 void setLedColor(unsigned long color)
 {
@@ -177,8 +172,21 @@ void setLedColor(unsigned long color)
   analogWrite(BLUE_LED_PIN, 255 - blue);
 }
 
-// These functions print information to the serial monitor for debugging
-// purposes.
+// The Arduino library provides a helpful function called map that scales values into different 
+// ranges, but the built-in map only works with certain data types (long, to be exact).  We would 
+// like to work with other data types, so we wrote our own alternate versions.
+
+float mapLongToFloat(long x, long inputMin, long inputMax, float outputMin, float outputMax)
+{
+  return (x - inputMin) * (outputMax - outputMin) / (inputMax - inputMin) + outputMin;
+}
+
+float mapFloatToFloat(float x, float inputMin, float inputMax, float outputMin, float outputMax)
+{
+  return (x - inputMin) * (outputMax - outputMin) / (inputMax - inputMin) + outputMin;
+}
+
+// These functions print information to the serial monitor for debugging purposes.
 
 void printDebugToSerialMonitor()
 {
@@ -216,19 +224,4 @@ void printColorToSerialMonitor(unsigned long color)
   Serial.print((color & 0xFF00) >> 8);
   Serial.print(", blue = ");
   Serial.println(color & 0xFF); 
-}
-
-// The Arduino library provides a helpful function called map that scales values
-// into different ranges, but the built-in map only works with certain data types
-// (long, to be exact).  We would like to work with other data types, so we wrote
-// our own alternate versions.
-
-float mapLongToFloat(long x, long inputMin, long inputMax, float outputMin, float outputMax)
-{
-  return (x - inputMin) * (outputMax - outputMin) / (inputMax - inputMin) + outputMin;
-}
-
-float mapFloatToFloat(float x, float inputMin, float inputMax, float outputMin, float outputMax)
-{
-  return (x - inputMin) * (outputMax - outputMin) / (inputMax - inputMin) + outputMin;
 }
