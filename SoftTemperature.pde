@@ -59,6 +59,35 @@ unsigned int filterBufferCurrentIndex = 0;
 #define GREEN(color) ((color) >> 8)
 #define BLUE(color) ((color) & 0xFF)
 
+// Now we need a way to specific what color should be displayed at what temperature.  For our
+// program, we'll use a reverse rainbow, with violet being displayed at the coldest temperature we
+// can sense and red being displayed at the highest reasonable temperature we can sense.  The 
+// program will compute intermediate temperatures appropriately.  The temperature will be specified
+// in degrees Fahrenheit and the color is specified as an unsigned long, which is the only data type 
+// capable of holding 24 bits (int is 16 bits on Arduino, long is 32).  A good site for looking up
+// color codes is:
+//
+// http://cloford.com/resources/colours/500col.htm
+
+struct TEMP_COLOR_PAIR
+{
+  float fahrenheit;
+  unsigned long color;
+};
+
+TEMP_COLOR_PAIR COLOR_MAP[] =
+{
+  {32, 0xEE82EE},  // violet
+  {41, 0x4B0082},  // indigo
+  {50, 0x0000FF},  // blue
+  {59, 0x00FF00},  // green
+  {68, 0xFFFF00},  // yellow
+  {77, 0xFF7F00},  // orange
+  {86, 0xFF0000}   // red
+};
+
+const unsigned int COLOR_MAP_SIZE = sizeof(COLOR_MAP) / sizeof(COLOR_MAP[0]);
+
 // The program will print temperatures and other debugging information to the Serial Monitor 
 // periodically.  The first value below specifies how often, in milliseconds, the printout occurs.  
 // 1000 milliseconds equals one second.  The second value remembers when the last printout was.
