@@ -55,19 +55,23 @@ unsigned int filterBufferCurrentIndex = 0;
 // are eight bits in a byte).  We'll pack these bytes into one variable for easy manipulation, and 
 // we can specify colors "web-style" with a six-digit hexadecimal value.  For example, 0xFF0080 
 // specifies a red value of 255, a green value of 0, and a blue value of 128.  We want some macros 
-// to help us break a color into its components.
+// to help us break a color into its components and to assemble one from components as well.  We
+// need to use an unsigned long to hold a color, which is the only data type capable of holding 24 
+// bits (int is 16 bits on Arduino, long is 32).
 
 #define RED(color) (((color) >> 16) & 0xFF)
 #define GREEN(color) (((color) >> 8) & 0xFF)
 #define BLUE(color) ((color) & 0xFF)
 
+#define RGB(red, green, blue) (((unsigned long) red << 16) | ((unsigned long) green << 8) | blue)
+
 // Now we need a way to specific what color should be displayed at what temperature.  For our
 // program, we'll use a reverse rainbow, with violet being displayed at the coldest temperature we
 // can sense and red being displayed at the highest reasonable temperature we can sense.  The 
 // program will compute intermediate temperatures appropriately.  The temperature will be specified
-// in degrees Fahrenheit and the color is specified as an unsigned long, which is the only data type 
-// capable of holding 24 bits (int is 16 bits on Arduino, long is 32).  A good site for looking up
-// color codes is http://cloford.com/resources/colours/500col.htm.
+// in degrees Fahrenheit.  A good site for looking up color codes is:
+//
+//    http://cloford.com/resources/colours/500col.htm.
 
 struct TEMP_COLOR_PAIR
 {
@@ -101,6 +105,13 @@ void setup()
 {
   initFilter();
   Serial.begin(9600);
+  
+  Serial.println(findColorForTemperature(30), HEX);
+  Serial.println(findColorForTemperature(45), HEX);
+  Serial.println(findColorForTemperature(68), HEX);
+  Serial.println(findColorForTemperature(75), HEX);
+  Serial.println(findColorForTemperature(86), HEX);
+  Serial.println(findColorForTemperature(90), HEX);
 }
 
 // Loop is called repeatedly as the program runs.
@@ -234,10 +245,17 @@ unsigned long findColorForTemperature(float fahrenheit)
 
 unsigned long interpolateColor(float fahrenheit, unsigned int baseColorIndex)
 {
-  return COLOR_MAP[baseColorIndex].color;
+  TEMP_COLOR_PAIR color1 = COLOR_MAP[baseColorIndex];
+  TEMP_COLOR_PAIR color2 = COLOR_MAP[baseColorIndex + 1];
+  
+  byte red = interpolate(fahrenheit, color1.fahrenheit, RED(color1.color), color2.fahrenheit, RED(color2.color));
+  byte green = interpolate(fahrenheit, color1.fahrenheit, GREEN(color1.color), color2.fahrenheit, GREEN(color2.color));
+  byte blue = interpolate(fahrenheit, color1.fahrenheit, BLUE(color1.color), color2.fahrenheit, BLUE(color2.color));
+  
+  return RGB(red, green, blue);
 }
 
-byte interpolate(float x1, byte y1, float x2, byte y2, float value)
+byte interpolate(float value, float x1, byte y1, float x2, byte y2)
 {
   return y1;
 }
