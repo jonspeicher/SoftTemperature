@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // SoftTemperature
-// Revision 1.0
-// December 21, 2009
+// Revision 1.1
+// December 24, 2009
 //
 // Sense temperature and change the color of an LED in response.  Designed for
 // the LilyPad Arduino.
@@ -11,6 +11,8 @@
 // http://www.hackpittsburgh.org
 //
 // ----------------------------------------------------------------------------
+
+// TBD: Keep counts, temp, etc globally for debugging purposes?
 
 // These items tell your program the characteristics of your temperature sensor.  They can be found 
 // by reading the datasheet that comes with your sensor.  The values here are specific to the 
@@ -48,12 +50,12 @@ const unsigned int FILTER_SIZE = 10;
 unsigned int filterBuffer[FILTER_SIZE];
 unsigned int filterBufferCurrentIndex = 0;
 
-// We need a way to manipulate colors and to specify colors for the LED output.  We'll use a byte for 
-// red, a byte for green, and a byte for blue (this is often called 24-bit color because there are 
-// eight bits in a byte).  We'll pack these bytes into one variable for easy manipulation, and we can
-// specify colors "web-style" with a six-digit hexadecimal value.  For example, 0xFF0080 specifies a
-// red value of 255, a green value of 0, and a blue value of 128.  We want some macros to help us break
-// a color into its components.
+// We need a way to manipulate colors and to specify colors for the LED output.  We'll use a byte 
+// for red, a byte for green, and a byte for blue (this is often called 24-bit color because there 
+// are eight bits in a byte).  We'll pack these bytes into one variable for easy manipulation, and 
+// we can specify colors "web-style" with a six-digit hexadecimal value.  For example, 0xFF0080 
+// specifies a red value of 255, a green value of 0, and a blue value of 128.  We want some macros 
+// to help us break a color into its components.
 
 #define RED(color) (((color) >> 16) & 0xFF)
 #define GREEN(color) (((color) >> 8) & 0xFF)
@@ -209,7 +211,35 @@ unsigned long findColorForTemperature(float fahrenheit)
     baseColorIndex++;
   }
   
+  // If the specified temperature is at the high end of the scale, display it.  If it's somewhere in 
+  // the middle, we need to compute the actual color algorithmically since it may be between two
+  // specified entries in the map.  Doing this makes the color change very smoothly as the 
+  // temperature changes.
+  
+  if (baseColorIndex == COLOR_MAP_SIZE)
+  {
+    return COLOR_MAP[baseColorIndex].color;
+  }
+  else
+  {
+    return interpolateColor(fahrenheit, baseColorIndex);
+  }
+}
+
+// Our color map specifies a color for only a few points along the temperature axis.  The actual
+// temperature is not likely to fall exactly on one of those points.  This function will compute
+// a color that corresponds to the current temperature by picking a color that is somewhere between
+// the colors for the two temperatures surrounding it in the color map.  Doing this produces a color
+// that changes very smoothly as the temperature changes.
+
+unsigned long interpolateColor(float fahrenheit, unsigned int baseColorIndex)
+{
   return COLOR_MAP[baseColorIndex].color;
+}
+
+byte interpolate(float x1, byte y1, float x2, byte y2, float value)
+{
+  return y1;
 }
 
 // This function changes the LED to the appropriate color.  The color is specified as one value
