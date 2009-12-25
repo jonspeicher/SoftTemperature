@@ -114,8 +114,7 @@ void setup()
   
   initFilter();
   
-  // Initialize the switch.  Set the switch as active low and activate the internal pullup 
-  // resistor.
+  // Initialize the switch.  Set the switch as active low and activate the internal pullup resistor.
   
   pinMode(SWITCH_PIN, INPUT);
   digitalWrite(SWITCH_PIN, HIGH);
@@ -137,7 +136,8 @@ void loop()
   
   float temperature = getTemperatureInFahrenheit();
   
-  // If the switch is pressed, blink out the temperature, otherwise show the color for the temperature.
+  // If the switch is pressed, blink out the temperature.  Otherwise, show the proper color for the
+  // temperature.
   
   if (isSwitchPressed())
   {
@@ -188,7 +188,7 @@ unsigned int getFilterResult()
   return sum / FILTER_SIZE;
 }
 
-// The temperature sensor produces an output voltage that corresponds to the sensed temperature.  
+// The temperature sensor produces an output voltage that corresponds to the sensed temperature. 
 // The LilyPad sees this voltage as an analog-to-digital conversion in units known as counts that 
 // range from 0 - 1023.  These functions convert from ADC counts to several intermediate units, 
 // ending with degrees Fahrenheit.
@@ -233,16 +233,35 @@ boolean isSwitchPressed()
   return !digitalRead(SWITCH_PIN);
 }
 
-// This function blinks the temperature using the LED.  The hundreds (if set), tens, and ones place are
-// blinked out separately with a short delay in between.
+// This function blinks the temperature using the LED.  The hundreds (if set), tens, and ones place 
+// are blinked out separately with a short delay in between.
 
 void blinkTemperature(float fahrenheit)
 {
-  unsigned int hundreds = fahrenheit / 100;
-  unsigned int tens = fahrenheit / 10;
-  unsigned int ones = (int) fahrenheit % 10;
+  // We need to be a little tricky here.  It's not really possible for us to display any place that 
+  // is zero, so we may need to tweak the temperature a little bit up or down to get one that can be 
+  // displayed with blinks.  Less accurate, more pretty.
   
-  printBlinkToSerialMonitor(hundreds, tens, ones);
+  float adjustedFahrenheit = adjustTemperatureForDisplay(fahrenheit);
+  
+  // Find the hundreds, tens, and ones places.
+  
+  unsigned int hundreds = adjustedFahrenheit / 100;
+  
+  // If there was a hundreds place, subtract the proper amount from the temperature or else our tens
+  // calculation will be inaccurate.
+  
+  if (hundreds > 0)
+  {
+    adjustedFahrenheit = adjustedFahrenheit - (hundreds * 100);
+  }
+  
+  unsigned int tens = adjustedFahrenheit / 10;
+  unsigned int ones = (int) adjustedFahrenheit % 10;
+  
+  printBlinkToSerialMonitor(fahrenheit, hundreds, tens, ones);
+  
+  // Now blink the LED.
   
   if (hundreds > 0)
   {
@@ -256,12 +275,17 @@ void blinkTemperature(float fahrenheit)
     delay(TEMPERATURE_DIGIT_DELAY_MS);
   }
   
-  if (ones > 0)
-  {
-    blinkLed(ones, TEMPERATURE_BLINK_COLOR, TEMPERATURE_BLINK_DELAY_MS);
-    delay(TEMPERATURE_DIGIT_DELAY_MS);
-  }
-  
+  blinkLed(ones, TEMPERATURE_BLINK_COLOR, TEMPERATURE_BLINK_DELAY_MS);
+  delay(TEMPERATURE_DIGIT_DELAY_MS);
+}
+
+// This function adjusts the input temperature to a temperature that is suitable for a blinked 
+// display.  Specifically it ensures that no significant digit places contain zeroes, since those 
+// cannot be displayed via blinking.
+
+float adjustTemperatureForDisplay(float temperature)
+{
+  return temperature;
 }
 
 // This function blinks the LED on and off using the specified number of blinks, color, and delay.
@@ -275,8 +299,10 @@ void blinkLed(unsigned int times, unsigned long color, unsigned int delayMs)
   {
     setLedColor(color);
     delay(delayMs);
+    
     setLedColor(0);
     delay(delayMs);
+    
     times--;
   }
 }
@@ -287,8 +313,8 @@ unsigned long findColorForTemperature(float fahrenheit)
 {
   unsigned int baseColorIndex = 0;
   
-  // Search through the color map to find the entry with a temperature that is less than or equal
-  // to the specified temperature.  Don't allow the index to exceed the size of the color map, or
+  // Search through the color map to find the entry with a temperature that is less than or equal to
+  // the specified temperature.  Don't allow the index to exceed the size of the color map, or
   // terrible things will happen.
   
   while (((baseColorIndex + 1) < COLOR_MAP_SIZE) && 
@@ -297,10 +323,10 @@ unsigned long findColorForTemperature(float fahrenheit)
     baseColorIndex++;
   }
   
-  // If the specified temperature is off either end of the scale, just display the color at that
-  // end of the scale.  If it's somewhere in the middle, we need to compute the actual color 
-  // algorithmically since it may be between two specified entries in the map.  Doing this makes 
-  // the color change very smoothly as the temperature changes.
+  // If the specified temperature is off either end of the scale, just display the color at that end
+  // of the scale.  If it's somewhere in the middle, we need to compute the actual color
+  // algorithmically since it may be between two specified entries in the map.  Doing this makes the
+  // color change very smoothly as the temperature changes.
   
   if ((fahrenheit < COLOR_MAP[0].fahrenheit) || 
       (fahrenheit > COLOR_MAP[COLOR_MAP_SIZE - 1].fahrenheit))
@@ -314,8 +340,8 @@ unsigned long findColorForTemperature(float fahrenheit)
 }
 
 // Our color map specifies a color for only a few points along the temperature axis.  The actual
-// temperature is not likely to fall exactly on one of those points.  This function will compute
-// a color that corresponds to the current temperature by picking a color that is somewhere between
+// temperature is not likely to fall exactly on one of those points.  This function will compute a
+// color that corresponds to the current temperature by picking a color that is somewhere between
 // the colors for the two temperatures surrounding it in the color map.  Doing this produces a color
 // that changes very smoothly as the temperature changes.
 
@@ -336,8 +362,8 @@ unsigned long interpolateColor(float fahrenheit, unsigned int baseColorIndex)
   return RGB(red, green, blue);
 }
 
-// This function implements a linear interpolation.  Given two points on a line, this function
-// will find the y value that corresponds to the provided x value as long as x0 <= x <= x1.
+// This function implements a linear interpolation.  Given two points on a line, this function will
+// find the y value that corresponds to the provided x value as long as x0 <= x <= x1.
 
 byte interpolate(float x, float x0, byte y0, float x1, byte y1)
 {
@@ -386,10 +412,11 @@ void printDebugToSerialMonitor()
   Serial.println("");
 }
 
-void printBlinkToSerialMonitor(int hundreds, int tens, int ones)
+void printBlinkToSerialMonitor(float temperature, int hundreds, int tens, int ones)
 {
-  Serial.print("Blinking temperature, ");
-  Serial.print("Hundreds = ");
+  Serial.print("Blinking temperature ");
+  Serial.print(temperature);
+  Serial.print(", Hundreds = ");
   Serial.print(hundreds);
   Serial.print(", Tens = ");
   Serial.print(tens);
