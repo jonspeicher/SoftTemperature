@@ -39,13 +39,6 @@ const unsigned int BLUE_LED_PIN = 10;
 
 const float INPUT_VOLTAGE = 5.0;
 
-// The program will print temperatures and other debugging information to the Serial Monitor 
-// periodically.  The first value below specifies how often, in milliseconds, the printout occurs.  
-// 1000 milliseconds equals one second.  The second value remembers when the last printout was.
-
-const unsigned int SERIAL_MONITOR_OUTPUT_PERIOD_MS = 1000;
-unsigned long lastOutputTimeMs = 0;
-
 // The readings from the temperature sensor module are sensitive and can fluctuate rapidly.  To keep 
 // the temperature from jumping around, the program averages the last few samples from the sensor 
 // (this is called a "moving average filter").  These items contain the last few samples and 
@@ -54,6 +47,24 @@ unsigned long lastOutputTimeMs = 0;
 const unsigned int FILTER_SIZE = 10;
 unsigned int filterBuffer[FILTER_SIZE];
 unsigned int filterBufferCurrentIndex = 0;
+
+// We need a way to manipulate colors and to specify colors for the LED output.  We'll use a byte for 
+// red, a byte for green, and a byte for blue (this is often called 24-bit color because there are 
+// eight bits in a byte).  We'll pack these bytes into one variable for easy manipulation, and we can
+// specify colors "web-style" with a six-digit hexadecimal value.  For example, 0xFF0080 specifies a
+// red value of 255, a green value of 0, and a blue value of 128.  We want some macros to help us break
+// a color into its components.
+
+#define RED(color) ((color) >> 16)
+#define GREEN(color) ((color) >> 8)
+#define BLUE(color) ((color) & 0xFF)
+
+// The program will print temperatures and other debugging information to the Serial Monitor 
+// periodically.  The first value below specifies how often, in milliseconds, the printout occurs.  
+// 1000 milliseconds equals one second.  The second value remembers when the last printout was.
+
+const unsigned int SERIAL_MONITOR_OUTPUT_PERIOD_MS = 1000;
+unsigned long lastOutputTimeMs = 0;
 
 // Setup is called once when the program starts.
 
@@ -169,14 +180,10 @@ unsigned long findColorForTemperature(float fahrenheit)
 // anode design.
 
 void setLedColor(unsigned long color)
-{
-  byte red = (color & 0xFF0000) >> 16;
-  byte green = (color & 0xFF00) >> 8;
-  byte blue = (color & 0xFF);
-  
-  analogWrite(RED_LED_PIN, 255 - red);
-  analogWrite(GREEN_LED_PIN, 255 - green);
-  analogWrite(BLUE_LED_PIN, 255 - blue);
+{  
+  analogWrite(RED_LED_PIN, 255 - RED(color));
+  analogWrite(GREEN_LED_PIN, 255 - GREEN(color));
+  analogWrite(BLUE_LED_PIN, 255 - BLUE(color));
 }
 
 // The Arduino library provides a helpful function called map that scales values into different 
