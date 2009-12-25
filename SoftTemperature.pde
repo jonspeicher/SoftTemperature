@@ -222,19 +222,25 @@ float getTemperatureInFahrenheit()
   return convertCelsiusToFahrenheit(celsius);
 }
 
-// This function returns true if the switch is pressed and false otherwise.
+// This function returns true if the switch is pressed and false otherwise.  Because the switch is
+// active low, the result of the digital read is negated.
 
 boolean isSwitchPressed()
 {  
   return !digitalRead(SWITCH_PIN);
 }
 
-// This function blinks the temperature using the LED.  The tens place and the ones place are
+// This function blinks the temperature using the LED.  The hundreds (if set), tens, and ones place are
 // blinked out separately with a short delay in between.
 
 void blinkTemperature(float fahrenheit)
 {
-  Serial.println("blinking temperature");
+  int hundreds = fahrenheit / 100;
+  int tens = fahrenheit / 10;
+  int ones = (int) fahrenheit % 10;
+  
+  printBlinkToSerialMonitor(hundreds, tens, ones);
+  
   delay(5000);
 }
 
@@ -340,6 +346,18 @@ void printDebugToSerialMonitor()
   unsigned long color = findColorForTemperature(fahrenheit);
   printColorToSerialMonitor(color);
   
+  Serial.println("");
+}
+
+void printBlinkToSerialMonitor(int hundreds, int tens, int ones)
+{
+  Serial.print("Blinking temperature, ");
+  Serial.print("Hundreds = ");
+  Serial.print(hundreds);
+  Serial.print(", Tens = ");
+  Serial.print(tens);
+  Serial.print(", Ones = ");
+  Serial.println(ones);
   Serial.println("");
 }
 
