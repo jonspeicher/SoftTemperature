@@ -23,14 +23,16 @@ const float VOLTS_PER_DEGREE_C = 0.01;
 const float VOLTS_AT_MIN_DEGREES_C = 0.5;
 const float VOLTS_AT_MAX_DEGREES_C = VOLTS_AT_MIN_DEGREES_C + (MAX_DEGREES_C * VOLTS_PER_DEGREE_C);
 
-// These items tell your program where the temperature sensor module and the LED module are 
-// connected to your LilyPad.  The temperature sensor should connect to an analog input pin and the 
-// LED should connect to three digital pins that have PWM capabilities.
+// These items tell your program where the temperature sensor module, the LED module, and the soft
+// switch are connected to your LilyPad.  The temperature sensor should connect to an analog input 
+// pin, the LED should connect to three digital pins that have PWM capabilities, and the switch
+// should connect to a digital input pin.
 
 const unsigned int TEMPERATURE_PIN = 0;
 const unsigned int RED_LED_PIN = 11;
 const unsigned int GREEN_LED_PIN = 9;
 const unsigned int BLUE_LED_PIN = 10;
+const unsigned int SWITCH_PIN = 7;
 
 // This item tells your program what the input voltage to your LilyPad is.  It is used in the 
 // calculation of the current temperature.  The LilyPad can run with 3.3 volts (like a coin cell 
@@ -48,6 +50,15 @@ const unsigned int FILTER_SIZE = 10;
 unsigned int filterBuffer[FILTER_SIZE];
 unsigned int filterBufferCurrentIndex = 0;
 
+// We need to remember whether the switch was pressed the last time we checked its state so that
+// we can determine whether to blink the temperature or not.  We also need a counter that we can
+// use to "debounce" the switch state.  Because of noise and fluctuations, we only want to declare
+// that the switch has been "pressed" or "released" if we see the state agree a few times in a row.
+
+boolean lastSwitchState;
+unsigned int switchDebounceCounter;
+static const unsigned int SWITCH_DEBOUNCE_COUNT = 10;
+
 // We need a way to manipulate colors and to specify colors for the LED output.  We'll use a byte 
 // for red, a byte for green, and a byte for blue (this is often called 24-bit color because there 
 // are eight bits in a byte).  We'll pack these bytes into one variable for easy manipulation, and 
@@ -62,6 +73,10 @@ unsigned int filterBufferCurrentIndex = 0;
 #define BLUE(color) ((color) & 0xFF)
 
 #define RGB(red, green, blue) (((unsigned long) red << 16) | ((unsigned long) green << 8) | blue)
+
+// We need to define the color that we will use when blinking the temperature.
+
+const unsigned long TEMPERATURE_BLINK_COLOR = 0xFFFFFF;
 
 // Now we need a way to specific what color should be displayed at what temperature.  For our
 // program, we'll use a reverse rainbow, with violet being displayed at the coldest temperature we
@@ -101,7 +116,19 @@ unsigned long lastOutputTimeMs = 0;
 
 void setup()
 {
+  // Initialize the temperature filter.
+  
   initFilter();
+  
+  // Initialize the switch.  Set the switch as active low and activate the internal pullup 
+  // resistor.
+  
+  pinMode(SWITCH_PIN, INPUT);
+  digitalWrite(SWITCH_PIN, HIGH);
+  lastSwitchState = false;
+  
+  // Enable the Serial Monitor.
+  
   Serial.begin(9600);
 }
 
@@ -111,11 +138,22 @@ void loop()
 {
   // Read the temperature and add it to the filter.
   
-  addValueToFilter(analogRead(TEMPERATURE_PIN));     
+  addValueToFilter(analogRead(TEMPERATURE_PIN));  
   
   // Get the current temperature in degrees Fahrenheit from the filter.
   
   float temperature = getTemperatureInFahrenheit();
+  
+  // If the switch has become active, blink out the temperature.
+
+  boolean switchState = isSwitchPressed();
+  
+  if (switchState && !lastSwitchState)
+  {
+    blinkTemperature(temperature);
+  }
+  
+  lastSwitchState = switchState;
   
   // Look up the appropriate LED color and display it.
   
@@ -196,6 +234,48 @@ float getTemperatureInFahrenheit()
 {
   float celsius = getTemperatureInCelsius();
   return convertCelsiusToFahrenheit(celsius);
+}
+
+// This function returns true if the switch is pressed and false otherwise.
+
+boolean isSwitchPressed()
+{
+  // We increment our debounce counter when we see that the switch is pressed, and we decrement
+  // it when we see that the switch is released.  When we see the debounce counter reach the
+  // max, the switch is pressed.  When we see the debounce counter reach zero, the switch is
+  // released.  Since the switch is active low, we invert the return from digitalRead.
+  
+  boolean state = !digitalRead(SWITCH_PIN);
+  
+  if (state && (switchDebounceCounter < SWITCH_DEBOUNCE_COUNT))
+  {
+    switchDebounceCounter++;
+  }
+  else if (!state && (switchDebounceCounter > 0))
+  {
+    switchDebounceCounter--;
+  }
+  
+  if (switchDebounceCounter == SWITCH_DEBOUNCE_COUNT)
+  {
+    return true;
+  }
+  else if (switchDebounceCounter == 0)
+  {
+    return false;
+  }
+  else
+  {
+    return lastSwitchState;
+  }
+}
+
+// This function blinks the temperature using the LED.  The tens place and the ones place are
+// blinked out separately with a short delay in between.
+
+void blinkTemperature(float fahrenheit)
+{
+  Serial.println("blinking temperature");
 }
 
 // This function finds the color that corresponds to the provided temperature and returns it.
