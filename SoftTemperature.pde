@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 // SoftTemperature
-// Revision 1.1
+// Revision 1.2
 // December 24, 2009
 //
 // Sense temperature and change the color of an LED in response.  Designed for
@@ -49,13 +49,6 @@ const float INPUT_VOLTAGE = 5.0;
 const unsigned int FILTER_SIZE = 10;
 unsigned int filterBuffer[FILTER_SIZE];
 unsigned int filterBufferCurrentIndex = 0;
-
-// We need to remember whether the switch was pressed the last time we checked its state so that
-// we can determine whether to blink the temperature or not.  We also need a counter that we can
-// use to "debounce" the switch state.  Because of noise and fluctuations, we only want to declare
-// that the switch has been "pressed" or "released" if we see the state agree a few times in a row.
-
-boolean lastSwitchState;
 
 // We need a way to manipulate colors and to specify colors for the LED output.  We'll use a byte 
 // for red, a byte for green, and a byte for blue (this is often called 24-bit color because there 
@@ -123,7 +116,6 @@ void setup()
   
   pinMode(SWITCH_PIN, INPUT);
   digitalWrite(SWITCH_PIN, HIGH);
-  lastSwitchState = false;
   
   // Enable the Serial Monitor.
   
@@ -142,22 +134,17 @@ void loop()
   
   float temperature = getTemperatureInFahrenheit();
   
-  // If the switch has become active, blink out the temperature.
-
-  boolean switchState = isSwitchPressed();
+  // If the switch is pressed, blink out the temperature, otherwise show the color for the temperature.
   
-  if (switchState && !lastSwitchState)
+  if (isSwitchPressed())
   {
-    // tbd maybe do a while switch is pressed in here?  i dunno
     blinkTemperature(temperature);
   }
-  
-  lastSwitchState = switchState;
-  
-  // Look up the appropriate LED color and display it.
-  
-  unsigned long color = findColorForTemperature(temperature);
-  setLedColor(color);
+  else
+  {
+    unsigned long color = findColorForTemperature(temperature);
+    setLedColor(color);
+  }
   
   // If it's time to print out the debug information to the serial monitor, do it.
   
@@ -238,16 +225,8 @@ float getTemperatureInFahrenheit()
 // This function returns true if the switch is pressed and false otherwise.
 
 boolean isSwitchPressed()
-{
-  boolean reading1 = !digitalRead(SWITCH_PIN);
-  delay(1);
-  boolean reading2 = !digitalRead(SWITCH_PIN);
-  delay(1);
-  boolean reading3 = !digitalRead(SWITCH_PIN);
-  delay(1);
-  boolean reading4 = !digitalRead(SWITCH_PIN);
-  
-  return (reading1 && reading2 && reading3 && reading4);
+{  
+  return !digitalRead(SWITCH_PIN);
 }
 
 // This function blinks the temperature using the LED.  The tens place and the ones place are
@@ -256,6 +235,7 @@ boolean isSwitchPressed()
 void blinkTemperature(float fahrenheit)
 {
   Serial.println("blinking temperature");
+  delay(5000);
 }
 
 // This function finds the color that corresponds to the provided temperature and returns it.
