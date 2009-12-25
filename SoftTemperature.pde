@@ -12,8 +12,6 @@
 //
 // ----------------------------------------------------------------------------
 
-// TBD: Keep counts, temp, etc globally for debugging purposes?
-
 // These items tell your program the characteristics of your temperature sensor.  They can be found 
 // by reading the datasheet that comes with your sensor.  The values here are specific to the 
 // LilyPad's temperature sensor module.
@@ -71,7 +69,7 @@ unsigned int filterBufferCurrentIndex = 0;
 // program will compute intermediate temperatures appropriately.  The temperature will be specified
 // in degrees Fahrenheit.  A good site for looking up color codes is:
 //
-//    http://cloford.com/resources/colours/500col.htm.
+//    http://cloford.com/resources/colours/500col.htm
 
 struct TEMP_COLOR_PAIR
 {
@@ -105,13 +103,6 @@ void setup()
 {
   initFilter();
   Serial.begin(9600);
-  
-  Serial.println(findColorForTemperature(30), HEX);
-  Serial.println(findColorForTemperature(45), HEX);
-  Serial.println(findColorForTemperature(68), HEX);
-  Serial.println(findColorForTemperature(75), HEX);
-  Serial.println(findColorForTemperature(86), HEX);
-  Serial.println(findColorForTemperature(90), HEX);
 }
 
 // Loop is called repeatedly as the program runs.
@@ -217,17 +208,19 @@ unsigned long findColorForTemperature(float fahrenheit)
   // to the specified temperature.  Don't allow the index to exceed the size of the color map, or
   // terrible things will happen.
   
-  while (((baseColorIndex + 1) < COLOR_MAP_SIZE) && (COLOR_MAP[baseColorIndex + 1].fahrenheit <= fahrenheit))
+  while (((baseColorIndex + 1) < COLOR_MAP_SIZE) && 
+         (COLOR_MAP[baseColorIndex + 1].fahrenheit <= fahrenheit))
   {
     baseColorIndex++;
   }
   
-  // If the specified temperature is at the high end of the scale, display it.  If it's somewhere in 
-  // the middle, we need to compute the actual color algorithmically since it may be between two
-  // specified entries in the map.  Doing this makes the color change very smoothly as the 
-  // temperature changes.
+  // If the specified temperature is off either end of the scale, just display the color at that
+  // end of the scale.  If it's somewhere in the middle, we need to compute the actual color 
+  // algorithmically since it may be between two specified entries in the map.  Doing this makes 
+  // the color change very smoothly as the temperature changes.
   
-  if (baseColorIndex == COLOR_MAP_SIZE)
+  if ((fahrenheit < COLOR_MAP[0].fahrenheit) || 
+      (fahrenheit > COLOR_MAP[COLOR_MAP_SIZE - 1].fahrenheit))
   {
     return COLOR_MAP[baseColorIndex].color;
   }
@@ -248,16 +241,24 @@ unsigned long interpolateColor(float fahrenheit, unsigned int baseColorIndex)
   TEMP_COLOR_PAIR color1 = COLOR_MAP[baseColorIndex];
   TEMP_COLOR_PAIR color2 = COLOR_MAP[baseColorIndex + 1];
   
-  byte red = interpolate(fahrenheit, color1.fahrenheit, RED(color1.color), color2.fahrenheit, RED(color2.color));
-  byte green = interpolate(fahrenheit, color1.fahrenheit, GREEN(color1.color), color2.fahrenheit, GREEN(color2.color));
-  byte blue = interpolate(fahrenheit, color1.fahrenheit, BLUE(color1.color), color2.fahrenheit, BLUE(color2.color));
+  byte red = interpolate(fahrenheit, color1.fahrenheit, RED(color1.color), 
+                                     color2.fahrenheit, RED(color2.color));
+                                     
+  byte green = interpolate(fahrenheit, color1.fahrenheit, GREEN(color1.color), 
+                                       color2.fahrenheit, GREEN(color2.color));
+                                       
+  byte blue = interpolate(fahrenheit, color1.fahrenheit, BLUE(color1.color), 
+                                      color2.fahrenheit, BLUE(color2.color));
   
   return RGB(red, green, blue);
 }
 
-byte interpolate(float value, float x1, byte y1, float x2, byte y2)
+// This function implements a linear interpolation.  Given two points on a line, this function
+// will find the y value that corresponds to the provided x value as long as x0 <= x <= x1.
+
+byte interpolate(float x, float x0, byte y0, float x1, byte y1)
 {
-  return y1;
+  return (y0 + ((x - x0) * ((y1 - y0) / (x1 - x0))));
 }
 
 // This function changes the LED to the appropriate color.  The color is specified as one value
@@ -316,10 +317,8 @@ void printTemperatureToSerialMonitor(unsigned int counts, float volts, float cel
 
 void printColorToSerialMonitor(unsigned long color)
 {
-  Serial.print("Color = ");
-  Serial.print(RED(color), HEX);
-  Serial.print(GREEN(color), HEX);
-  Serial.print(BLUE(color), HEX);
+  Serial.print("Color = 0x");
+  Serial.print(color, HEX);
   Serial.print(", red = ");
   Serial.print(RED(color));
   Serial.print(", green = ");
