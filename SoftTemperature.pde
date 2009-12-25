@@ -69,8 +69,8 @@ unsigned int filterBufferCurrentIndex = 0;
 // the delays used between blinks and between digits.
 
 const unsigned long TEMPERATURE_BLINK_COLOR = 0xFFFFFF;
-const unsigned int TEMPERATURE_BLINK_DELAY_MS = 1000;
-const unsigned int TEMPERATURE_DIGIT_DELAY_MS = 2000;
+const unsigned int TEMPERATURE_BLINK_DELAY_MS = 500;
+const unsigned int TEMPERATURE_DIGIT_DELAY_MS = 1000;
 
 // Now we need a way to specific what color should be displayed at what temperature.  For our
 // program, we'll use a reverse rainbow, with violet being displayed at the coldest temperature we
@@ -238,39 +238,47 @@ boolean isSwitchPressed()
 
 void blinkTemperature(float fahrenheit)
 {
-  int hundreds = fahrenheit / 100;
-  int tens = fahrenheit / 10;
-  int ones = (int) fahrenheit % 10;
+  unsigned int hundreds = fahrenheit / 100;
+  unsigned int tens = fahrenheit / 10;
+  unsigned int ones = (int) fahrenheit % 10;
   
   printBlinkToSerialMonitor(hundreds, tens, ones);
   
   if (hundreds > 0)
   {
     blinkLed(hundreds, TEMPERATURE_BLINK_COLOR, TEMPERATURE_BLINK_DELAY_MS);
+    delay(TEMPERATURE_DIGIT_DELAY_MS);
   }
-  
-  delay(TEMPERATURE_DIGIT_DELAY_MS);
   
   if (tens > 0)
   {
     blinkLed(tens, TEMPERATURE_BLINK_COLOR, TEMPERATURE_BLINK_DELAY_MS);
+    delay(TEMPERATURE_DIGIT_DELAY_MS);
   }
-  
-  delay(TEMPERATURE_DIGIT_DELAY_MS);
   
   if (ones > 0)
   {
     blinkLed(ones, TEMPERATURE_BLINK_COLOR, TEMPERATURE_BLINK_DELAY_MS);
+    delay(TEMPERATURE_DIGIT_DELAY_MS);
   }
   
-  delay(TEMPERATURE_DIGIT_DELAY_MS);
 }
 
 // This function blinks the LED on and off using the specified number of blinks, color, and delay.
 
 void blinkLed(unsigned int times, unsigned long color, unsigned int delayMs)
 {
-  //setLedColor(0);
+  setLedColor(0);
+  delay(delayMs);
+  
+  while (times > 0)
+  {
+    setLedColor(color);
+    delay(delayMs);
+    setLedColor(0);
+    delay(delayMs);
+    times--;
+  }
 }
 
 // This function finds the color that corresponds to the provided temperature and returns it.
