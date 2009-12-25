@@ -115,7 +115,7 @@ void loop()
   
   // Look up the appropriate LED color and display it.
   
-  unsigned long color = findColorForTemperature(color);
+  unsigned long color = findColorForTemperature(temperature);
   setLedColor(color);
   
   // If it's time to print out the debug information to the serial monitor, do it.
@@ -198,7 +198,18 @@ float getTemperatureInFahrenheit()
 
 unsigned long findColorForTemperature(float fahrenheit)
 {
-  return 0x102030;
+  unsigned int baseColorIndex = 0;
+  
+  // Search through the color map to find the entry with a temperature that is less than or equal
+  // to the specified temperature.  Don't allow the index to exceed the size of the color map, or
+  // terrible things will happen.
+  
+  while (((baseColorIndex + 1) < COLOR_MAP_SIZE) && (COLOR_MAP[baseColorIndex + 1].fahrenheit <= fahrenheit))
+  {
+    baseColorIndex++;
+  }
+  
+  return COLOR_MAP[baseColorIndex].color;
 }
 
 // This function changes the LED to the appropriate color.  The color is specified as one value
