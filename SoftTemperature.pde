@@ -56,8 +56,6 @@ unsigned int filterBufferCurrentIndex = 0;
 // that the switch has been "pressed" or "released" if we see the state agree a few times in a row.
 
 boolean lastSwitchState;
-unsigned int switchDebounceCounter;
-static const unsigned int SWITCH_DEBOUNCE_COUNT = 10;
 
 // We need a way to manipulate colors and to specify colors for the LED output.  We'll use a byte 
 // for red, a byte for green, and a byte for blue (this is often called 24-bit color because there 
@@ -150,6 +148,7 @@ void loop()
   
   if (switchState && !lastSwitchState)
   {
+    // tbd maybe do a while switch is pressed in here?  i dunno
     blinkTemperature(temperature);
   }
   
@@ -240,34 +239,15 @@ float getTemperatureInFahrenheit()
 
 boolean isSwitchPressed()
 {
-  // We increment our debounce counter when we see that the switch is pressed, and we decrement
-  // it when we see that the switch is released.  When we see the debounce counter reach the
-  // max, the switch is pressed.  When we see the debounce counter reach zero, the switch is
-  // released.  Since the switch is active low, we invert the return from digitalRead.
+  boolean reading1 = !digitalRead(SWITCH_PIN);
+  delay(1);
+  boolean reading2 = !digitalRead(SWITCH_PIN);
+  delay(1);
+  boolean reading3 = !digitalRead(SWITCH_PIN);
+  delay(1);
+  boolean reading4 = !digitalRead(SWITCH_PIN);
   
-  boolean state = !digitalRead(SWITCH_PIN);
-  
-  if (state && (switchDebounceCounter < SWITCH_DEBOUNCE_COUNT))
-  {
-    switchDebounceCounter++;
-  }
-  else if (!state && (switchDebounceCounter > 0))
-  {
-    switchDebounceCounter--;
-  }
-  
-  if (switchDebounceCounter == SWITCH_DEBOUNCE_COUNT)
-  {
-    return true;
-  }
-  else if (switchDebounceCounter == 0)
-  {
-    return false;
-  }
-  else
-  {
-    return lastSwitchState;
-  }
+  return (reading1 && reading2 && reading3 && reading4);
 }
 
 // This function blinks the temperature using the LED.  The tens place and the ones place are
