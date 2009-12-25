@@ -139,13 +139,20 @@ float convertCelsiusToFahrenheit(float celsius)
   return (celsius * 1.8) + 32;
 }
 
+// This function reads the value of the filter, converts it into degrees Celsius, and returns it.
+
+float getTemperatureInCelsius()
+{
+  unsigned int counts = getFilterResult();
+  float volts = convertAdcCountsToVolts(counts);
+  return convertVoltsToCelsius(volts);
+}
+
 // This function reads the value of the filter, converts it into degrees Fahrenheit, and returns it.
 
 float getTemperatureInFahrenheit()
 {
-  unsigned int counts = getFilterResult();
-  float volts = convertAdcCountsToVolts(counts);
-  float celsius = convertVoltsToCelsius(volts);
+  float celsius = getTemperatureInCelsius();
   return convertCelsiusToFahrenheit(celsius);
 }
 
