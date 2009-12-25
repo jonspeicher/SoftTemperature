@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // SoftTemperature
 // Revision 1.2
-// December 24, 2009
+// December 25, 2009
 //
 // Sense temperature and change the color of an LED in response.  Designed for
 // the LilyPad Arduino.
@@ -285,6 +285,22 @@ void blinkTemperature(float fahrenheit)
 
 float adjustTemperatureForDisplay(float temperature)
 {
+  // Adjust the temperature.
+  
+  if ((temperature > 100) && (temperature < 111))
+  {
+    // If the temperature above 100 but below 111, this means that the tens place or the ones place
+    // are potentially zero.  The closest temperature with all non-zero digits is 111.
+    
+    temperature = 111;
+  }
+  else if (((int) temperature % 10) == 0)
+  {
+    // If the ones place is zero, increment the temperature by one degree.
+    
+    temperature++;
+  }
+  
   return temperature;
 }
 
