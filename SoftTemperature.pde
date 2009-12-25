@@ -55,8 +55,8 @@ unsigned int filterBufferCurrentIndex = 0;
 // red value of 255, a green value of 0, and a blue value of 128.  We want some macros to help us break
 // a color into its components.
 
-#define RED(color) ((color) >> 16)
-#define GREEN(color) ((color) >> 8)
+#define RED(color) (((color) >> 16) & 0xFF)
+#define GREEN(color) (((color) >> 8) & 0xFF)
 #define BLUE(color) ((color) & 0xFF)
 
 // Now we need a way to specific what color should be displayed at what temperature.  For our
@@ -65,9 +65,7 @@ unsigned int filterBufferCurrentIndex = 0;
 // program will compute intermediate temperatures appropriately.  The temperature will be specified
 // in degrees Fahrenheit and the color is specified as an unsigned long, which is the only data type 
 // capable of holding 24 bits (int is 16 bits on Arduino, long is 32).  A good site for looking up
-// color codes is:
-//
-// http://cloford.com/resources/colours/500col.htm
+// color codes is http://cloford.com/resources/colours/500col.htm.
 
 struct TEMP_COLOR_PAIR
 {
@@ -135,7 +133,7 @@ void loop()
 
 void initFilter()
 {
-  for (int i = 0; i < FILTER_SIZE; i++)
+  for (unsigned int i = 0; i < FILTER_SIZE; i++)
   {
     filterBuffer[i] = 0;
   }
@@ -151,7 +149,7 @@ unsigned int getFilterResult()
 {
   unsigned int sum = 0;
   
-  for (int i = 0; i < FILTER_SIZE; i++)
+  for (unsigned int i = 0; i < FILTER_SIZE; i++)
   {
     sum += filterBuffer[i];
   }
@@ -200,7 +198,7 @@ float getTemperatureInFahrenheit()
 
 unsigned long findColorForTemperature(float fahrenheit)
 {
-  return 0x00FF00;
+  return 0x102030;
 }
 
 // This function changes the LED to the appropriate color.  The color is specified as one value
@@ -260,11 +258,13 @@ void printTemperatureToSerialMonitor(unsigned int counts, float volts, float cel
 void printColorToSerialMonitor(unsigned long color)
 {
   Serial.print("Color = ");
-  Serial.print(color, HEX);
+  Serial.print(RED(color), HEX);
+  Serial.print(GREEN(color), HEX);
+  Serial.print(BLUE(color), HEX);
   Serial.print(", red = ");
-  Serial.print((color & 0xFF0000) >> 16);
+  Serial.print(RED(color));
   Serial.print(", green = ");
-  Serial.print((color & 0xFF00) >> 8);
+  Serial.print(GREEN(color));
   Serial.print(", blue = ");
-  Serial.println(color & 0xFF); 
+  Serial.println(BLUE(color)); 
 }
