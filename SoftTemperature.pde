@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 // SoftTemperature
-// Revision 1.2
+// Revision 1.3
 // December 25, 2009
 //
 // Sense temperature and change the color of an LED in response.  Designed for
@@ -287,10 +287,10 @@ float adjustTemperatureForDisplay(float temperature)
 {
   // Adjust the temperature.
   
-  if ((temperature > 100) && (temperature < 111))
+  if ((temperature >= 100) && (temperature < 111))
   {
-    // If the temperature above 100 but below 111, this means that the tens place or the ones place
-    // are potentially zero.  The closest temperature with all non-zero digits is 111.
+    // If the temperature at or above 100 but below 111, this means that the tens place or the ones 
+    // place are potentially zero.  The closest temperature with all non-zero digits is 111.
     
     temperature = 111;
   }
