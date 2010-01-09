@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // SoftTemperature
-// Revision 1.3
-// December 25, 2009
+// Revision 1.4
+// January 9, 2009
 //
 // Sense temperature and change the color of an LED in response.  Designed for
 // the LilyPad Arduino.
@@ -205,7 +205,28 @@ float convertAdcCountsToVolts(unsigned int counts)
 
 float convertVoltsToCelsius(float volts)
 {
-  return mapFloatToFloat(volts, VOLTS_AT_MIN_DEGREES_C, VOLTS_AT_MAX_DEGREES_C, MIN_DEGREES_C, MAX_DEGREES_C);
+  // Map the voltage into the temperature range we're interested in.
+  
+  float celsius = mapFloatToFloat(volts, VOLTS_AT_MIN_DEGREES_C, VOLTS_AT_MAX_DEGREES_C, MIN_DEGREES_C, MAX_DEGREES_C);
+  
+  // Because the range of the analog input is greater than the output range of the sensor (0 - 3.3 
+  // or 5 volts versus 0 - 1.2 volts) it is possible that the temperature in Celsuis will come back
+  // weird if the sensor is unconnected or something is wrong with the circuit.  This is because the
+  // map calculations go crazy if you tell them to map a value that is outside of the minimum and
+  // maximum range that we specify.  If we get one of these out-of-range values something is
+  // definitely wrong, but we'll fix it here by clamping the temperature to the min or the max
+  // appropriately.
+  
+  if (celsius < MIN_DEGREES_C)
+  {
+      celsius = MIN_DEGREES_C;
+  }
+  else if (celsius > MAX_DEGREES_C)
+  {
+      celsius = MAX_DEGREES_C;
+  }
+  
+  return celsius;
 }
 
 float convertCelsiusToFahrenheit(float celsius)
