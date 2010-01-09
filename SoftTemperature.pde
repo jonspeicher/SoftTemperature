@@ -44,7 +44,7 @@ const unsigned int SWITCH_PIN = 7;
 // battery) or with 5 volts (like a USB cable connected to your computer).  If this value isn't set 
 // properly, your program won't calculate temperature correctly.
 
-const float INPUT_VOLTAGE = 5.0;
+const float INPUT_VOLTAGE = 3.3;
 
 // The readings from the temperature sensor module are sensitive and can fluctuate rapidly.  To keep 
 // the temperature from jumping around, the program averages the last few samples from the sensor 
