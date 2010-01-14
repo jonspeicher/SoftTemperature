@@ -40,11 +40,11 @@ const unsigned int BLUE_LED_PIN = 10;
 const unsigned int SWITCH_PIN = 7;
 
 // This item tells your program what the input voltage to your LilyPad is.  It is used in the 
-// calculation of the current temperature.  The LilyPad can run with 3.3 volts (like a coin cell 
+// calculation of the current temperature.  The LilyPad can run with 3 volts (like a coin cell 
 // battery) or with 5 volts (like a USB cable connected to your computer).  If this value isn't set 
 // properly, your program won't calculate temperature correctly.
 
-const float INPUT_VOLTAGE = 3.3;
+const float INPUT_VOLTAGE = 5;
 
 // The readings from the temperature sensor module are sensitive and can fluctuate rapidly.  To keep 
 // the temperature from jumping around, the program averages the last few samples from the sensor 
