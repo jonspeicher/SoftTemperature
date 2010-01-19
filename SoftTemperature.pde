@@ -10,11 +10,6 @@
 // jonathan@hackpittsburgh.org
 // http://www.hackpittsburgh.org
 //
-// This content is made available under the Creative Commons Attribution-
-// Noncommercial-Share Alike 3.0 Unported license.
-//
-// http://creativecommons.org/licenses/by-nc-sa/3.0
-//
 // ----------------------------------------------------------------------------
 
 // These items tell your program the characteristics of your temperature sensor.  They can be found 
